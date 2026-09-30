@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -23,8 +24,7 @@ import org.junit.platform.launcher.TestPlan;
 public class PlainTextTestReporter implements TestExecutionListener {
 
     private final Map<String, Long> startedAtNanos = new HashMap<>();
-    private final List<TestResultLine> results = new ArrayList<>();
-    private String testClass = "tests";
+    private final Map<String, List<TestResultLine>> resultsByClass = new LinkedHashMap<>();
 
     @Override
     public void executionStarted(TestIdentifier testIdentifier) {
@@ -36,8 +36,7 @@ public class PlainTextTestReporter implements TestExecutionListener {
     @Override
     public void executionSkipped(TestIdentifier testIdentifier, String reason) {
         if (testIdentifier.isTest()) {
-            rememberClass(testIdentifier);
-            results.add(new TestResultLine("SKIP", 0, testIdentifier.getDisplayName()));
+            resultsFor(testIdentifier).add(new TestResultLine("SKIP", 0, testIdentifier.getDisplayName()));
         }
     }
 
@@ -46,17 +45,23 @@ public class PlainTextTestReporter implements TestExecutionListener {
         if (!testIdentifier.isTest()) {
             return;
         }
-        rememberClass(testIdentifier);
         String status = switch (testExecutionResult.getStatus()) {
             case SUCCESSFUL -> "PASS";
             case FAILED -> "FAIL";
-            case ABORTED -> "ABORT";
+            case ABORTED -> assumptionSkipped(testExecutionResult) ? "SKIP" : "ABORT";
         };
-        results.add(new TestResultLine(status, elapsedSeconds(testIdentifier), testIdentifier.getDisplayName()));
+        resultsFor(testIdentifier)
+                .add(new TestResultLine(status, elapsedSeconds(testIdentifier), testIdentifier.getDisplayName()));
     }
 
     @Override
     public void testPlanExecutionFinished(TestPlan testPlan) {
+        for (Map.Entry<String, List<TestResultLine>> entry : resultsByClass.entrySet()) {
+            writeClassReport(entry.getKey(), entry.getValue());
+        }
+    }
+
+    private void writeClassReport(String testClass, List<TestResultLine> results) {
         if (results.isEmpty()) {
             return;
         }
@@ -77,7 +82,12 @@ public class PlainTextTestReporter implements TestExecutionListener {
         lines.add("Passed: " + passed + "  Failed: " + failed + "  Aborted: " + aborted + "  Skipped: " + skipped);
         lines.add(String.format(Locale.US, "Total runtime: %.3f s", totalSeconds));
 
-        Path report = Path.of("target", "surefire-reports", testClass + ".txt");
+        String simpleName = testClass.substring(testClass.lastIndexOf('.') + 1);
+        writeLines(Path.of("target", "surefire-reports", testClass + ".txt"), lines);
+        writeLines(Path.of("reports", simpleName + ".txt"), lines);
+    }
+
+    private static void writeLines(Path report, List<String> lines) {
         try {
             Files.createDirectories(report.getParent());
             Files.write(report, lines, StandardCharsets.UTF_8);
@@ -86,20 +96,28 @@ public class PlainTextTestReporter implements TestExecutionListener {
         }
     }
 
+    private List<TestResultLine> resultsFor(TestIdentifier testIdentifier) {
+        String testClass = "tests";
+        if (testIdentifier.getSource().isPresent() && testIdentifier.getSource().get() instanceof MethodSource method) {
+            testClass = method.getClassName();
+        }
+        return resultsByClass.computeIfAbsent(testClass, key -> new ArrayList<>());
+    }
+
+    private static boolean assumptionSkipped(TestExecutionResult result) {
+        return result.getThrowable()
+                .map(Throwable::getClass)
+                .map(Class::getName)
+                .filter(name -> name.contains("TestAborted") || name.contains("Assumption"))
+                .isPresent();
+    }
+
     private double elapsedSeconds(TestIdentifier testIdentifier) {
         Long started = startedAtNanos.remove(testIdentifier.getUniqueId());
         if (started == null) {
             return 0;
         }
         return (System.nanoTime() - started) / 1_000_000_000.0;
-    }
-
-    private void rememberClass(TestIdentifier testIdentifier) {
-        testIdentifier.getSource().ifPresent(source -> {
-            if (source instanceof MethodSource method) {
-                testClass = method.getClassName();
-            }
-        });
     }
 
     private record TestResultLine(String status, double seconds, String name) {

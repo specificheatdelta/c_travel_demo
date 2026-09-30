@@ -1,0 +1,21 @@
+Headless restriction probe
+
+Suite options (same flags as the headed tests, plus --headless=new)
+  homepage loaded: true
+  access denied: false
+  title: Home | Costco Travel
+  url: https://www.costcotravel.com/
+  window: (1920, 1080)
+  snippet: Costco.com Membership Help Center 1-866-921-7925 Login DEALS DESTINATIONS BUILD YOUR OWN TRIP CRUISES RENTAL CARS THEME PARKS & SPECIALTY Packages - selected Hotels - not selected
+
+Minimal headless (no automation-hiding flags, no spoofed user agent)
+  homepage loaded: false
+  access denied: true
+  title: Access Denied
+  url: https://www.costcotravel.com/
+  window: (1920, 1080)
+  snippet: Access Denied You don't have permission to access "http://www.costcotravel.com/" on this server. Reference [redacted] https://errors.edgesuite.net/
+
+Finding: a default headless Chrome receives Access Denied from the site edge (Akamai).
+The suite Chrome options still load the homepage headless. Set HEADLESS=true to run that way.
+The four homepage tests passed headless with those suite options.

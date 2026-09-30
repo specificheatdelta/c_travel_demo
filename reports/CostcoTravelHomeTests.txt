@@ -1,10 +1,10 @@
 Test set: com.costcotravel.tests.CostcoTravelHomeTests
 
 Result  Time        Test
-PASS      3.771 s   Rental Cars tab shows pickup location and Search
-PASS      3.625 s   Hotels tab shows destination, dates, and Search
-PASS      3.225 s   Homepage loads with Costco Travel branding and login
-PASS      3.120 s   Cruises tab shows the cruise search form
+PASS      2.924 s   Rental Cars tab shows pickup location and Search
+PASS      3.430 s   Hotels tab shows destination, dates, and Search
+PASS      3.838 s   Homepage loads with Costco Travel branding and login
+PASS      3.025 s   Cruises tab shows the cruise search form
 
 Passed: 4  Failed: 0  Aborted: 0  Skipped: 0
-Total runtime: 13.740 s
+Total runtime: 13.217 s

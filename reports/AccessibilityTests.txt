@@ -1,0 +1,9 @@
+Test set: com.costcotravel.tests.AccessibilityTests
+
+Result  Time        Test
+PASS      3.914 s   Homepage search widget and header have no serious axe violations
+PASS      3.051 s   Homepage skip link, logo alt text, and search widget labels
+PASS      6.843 s   Sign-in form labels the email and password fields
+
+Passed: 3  Failed: 0  Aborted: 0  Skipped: 0
+Total runtime: 13.808 s

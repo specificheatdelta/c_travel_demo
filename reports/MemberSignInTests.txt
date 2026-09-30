@@ -1,0 +1,7 @@
+Test set: com.costcotravel.tests.MemberSignInTests
+
+Result  Time        Test
+SKIP      0.023 s   Member can sign in when credentials are supplied outside the repo
+
+Passed: 0  Failed: 0  Aborted: 0  Skipped: 1
+Total runtime: 0.023 s

@@ -1,5 +1,8 @@
 target/
 .mvn/wrapper/maven-wrapper.jar
+credentials.properties
+.env
+.env.*
 .idea/
 *.iml
 .classpath

@@ -18,7 +18,11 @@ public class HomePage {
     private final WebDriverWait wait;
 
     private final By logo = By.cssSelector("a.logo");
+    private final By logoImage = By.cssSelector("a.logo img");
+    private final By skipLink = By.id("skip-to-main-link");
     private final By loginLink = By.xpath("//a[contains(normalize-space(),'Login')] | //span[contains(normalize-space(),'Login')]");
+    private final By desktopLogin = By.id("yourItineraryMemberAccount");
+    private final By signedInIcon = By.cssSelector("[data-test='loggedInIcon']");
     private final By helpCenterLink = By.linkText("Help Center");
     private final By searchWidget = By.id("search_widget");
 
@@ -54,6 +58,24 @@ public class HomePage {
 
     public boolean isLogoVisible() {
         return wait.until(ExpectedConditions.visibilityOfElementLocated(logo)).isDisplayed();
+    }
+
+    public String logoAltText() {
+        return wait.until(ExpectedConditions.presenceOfElementLocated(logoImage)).getDomAttribute("alt");
+    }
+
+    public boolean isSkipLinkPresent() {
+        return !driver.findElements(skipLink).isEmpty();
+    }
+
+    public HomePage openLogin() {
+        wait.until(ExpectedConditions.elementToBeClickable(desktopLogin)).click();
+        return this;
+    }
+
+    public boolean isSignedIn() {
+        return wait.until(driver -> driver.findElements(signedInIcon).stream().anyMatch(WebElement::isDisplayed)
+                || driver.findElements(By.cssSelector("[data-test='linkLogout']")).stream().anyMatch(WebElement::isDisplayed));
     }
 
     public boolean isLoginVisible() {

@@ -1,0 +1,7 @@
+Test set: com.costcotravel.tests.HeadlessRestrictionTest
+
+Result  Time        Test
+PASS      3.550 s   Headless Chrome cannot be used as a drop-in replacement for the headed suite
+
+Passed: 1  Failed: 0  Aborted: 0  Skipped: 0
+Total runtime: 3.550 s

@@ -8,8 +8,13 @@ Basic Java Selenium 4 suite for [Costco Travel](https://www.costcotravel.com/) u
 2. Hotels tab shows destination, check-in, check-out, and Search.
 3. Rental Cars tab shows pickup location and Search.
 4. Cruises tab shows the cruise search form.
+5. Homepage skip link, logo alt text, and hotel search fields.
+6. Header and search widget have no serious or critical axe-core violations.
+7. Sign-in form labels email and password, with no serious or critical axe-core violations.
+8. A default headless Chrome is rejected with Access Denied; the suite's headless options are not.
+9. Member sign-in, only when credentials are supplied outside the repo.
 
-Each test opens Chrome, loads the homepage, checks the page, then closes the browser.
+Each homepage check opens Chrome, loads the homepage, checks the page, then closes the browser. Accessibility checks also open the sign-in page. The member sign-in test submits a username and password only when those values are provided outside the repo.
 
 ## Requirements
 
@@ -38,9 +43,7 @@ $env:JAVA_HOME = "C:\Program Files\Java\jdk-21"
 
 Use the folder that contains `bin\java.exe`, not the `bin` folder itself.
 
-### 2. Run all four tests
-
-Leave Chrome visible. Costco Travel often returns an Access Denied page to headless Chrome.
+### 2. Run the suite
 
 ```powershell
 .\mvnw.cmd test
@@ -57,11 +60,11 @@ The first run can take a few minutes while the wrapper downloads Maven and Selen
 A passing run ends with a Surefire summary similar to:
 
 ```text
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 9, Failures: 0, Errors: 0, Skipped: 1
 BUILD SUCCESS
 ```
 
-Reports are written to `target/surefire-reports/`.
+The skipped test is member sign-in, until credentials are supplied. Reports are written to `reports/` and `target/surefire-reports/`.
 
 ### 3. Run one test
 
@@ -85,6 +88,27 @@ Method names:
 | `hotelsTabShowsSearchFields` | Hotels destination, dates, and Search |
 | `rentalCarsTabShowsPickupAndSearch` | Rental car pickup and Search |
 | `cruisesTabShowsSearchForm` | Cruise search form |
+| `homepageHasSkipLinkLogoAltAndSearchLabels` | Skip link, logo alt text, hotel search fields |
+| `homepageSearchAndHeaderHaveNoSeriousAxeViolations` | axe-core on the header and search widget |
+| `signInFormExposesLabeledFields` | Sign-in labels and axe-core on that page |
+| `headlessChromeIsRestricted` | Default headless Chrome versus the suite's headless options |
+| `memberCanSignIn` | Signs in when credentials are set; otherwise skipped |
+
+### Sign-in credentials
+
+The sign-in test reads a username and password from the environment, or from a gitignored `credentials.properties` file. It does not store them in source, and reports strip the query string from the sign-in URL.
+
+Do not commit credentials, and do not paste them into chat. For one PowerShell session:
+
+```powershell
+$env:COSTCO_USERNAME = "you@example.com"
+$env:COSTCO_PASSWORD = "your-password"
+.\mvnw.cmd -Dtest=MemberSignInTests test
+```
+
+Or copy `credentials.properties.example` to `credentials.properties`, fill in the two keys, and run the same command. `credentials.properties` is listed in `.gitignore`.
+
+Without either source, `memberCanSignIn` is skipped.
 
 ### From an IDE
 
@@ -92,11 +116,11 @@ Import the folder as a Maven project, then run `CostcoTravelHomeTests` as a JUni
 
 ## Headless mode
 
-Headless is off unless you set `HEADLESS` to `true`. Use it only if you need a browser with no window; this site may block it.
+Headless is off unless you set `HEADLESS` to `true`. The four homepage tests pass that way.
 
 ```powershell
 $env:HEADLESS = "true"
-.\mvnw.cmd test
+.\mvnw.cmd -Dtest=CostcoTravelHomeTests test
 ```
 
 Clear it before a normal run:
@@ -105,9 +129,20 @@ Clear it before a normal run:
 Remove-Item Env:HEADLESS
 ```
 
+A default headless Chrome, without the Chrome options this suite already uses, is rejected. The page title is `Access Denied` and the body points at `errors.edgesuite.net` (Akamai). That rejection is what made headless look unusable. `HeadlessRestrictionTest` records both results in `reports/headless-probe.txt`.
+
+## Accessibility results
+
+axe-core writes:
+
+- `reports/accessibility-homepage.txt`
+- `reports/accessibility-signin.txt`
+
+Test summaries are in `reports/<TestClass>.txt` and `target/surefire-reports/`.
+
 ## If a test fails
 
-- **Access Denied** in the page title: run with Chrome visible and leave `HEADLESS` unset.
+- **Access Denied** in the page title: you are in a default headless Chrome. Run with `HEADLESS` unset, or keep the suite Chrome options and set `HEADLESS` to `true`.
 - **`JAVA_HOME` not found**: set `JAVA_HOME` to the JDK folder, then run `.\mvnw.cmd test` again.
 - **ChromeDriver or browser startup error**: update Google Chrome, then rerun. Selenium Manager picks a matching driver.
 - **Timeout waiting for a field**: the site layout may have changed. Locators live in `src/test/java/com/costcotravel/pages/HomePage.java`.
